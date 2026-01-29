@@ -1,7 +1,5 @@
 package com.example.springsecurity.service;
 
-import com.example.springsecurity.exception.ResourceNotFoundException;
-import com.example.springsecurity.model.User;
 import com.example.springsecurity.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;

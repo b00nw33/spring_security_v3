@@ -3,19 +3,15 @@ package com.example.springsecurity.service;
 import com.example.springsecurity.dto.UserDto;
 import com.example.springsecurity.exception.EmailAlreadyExistsException;
 import com.example.springsecurity.exception.ResourceNotFoundException;
-import com.example.springsecurity.model.EnumRole;
 import com.example.springsecurity.model.User;
 import com.example.springsecurity.repository.UserRepository;
 import com.example.springsecurity.util.JwtUtils;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -64,15 +60,15 @@ public class AuthService {
          * SecurityContextHolder.getContext().setAuthentication(authenticationResponse) - logs the authenticated user
          * authenticationResponse.getPrincipal() - returns an Object (class: UserDetails)
          * Cast returned UserDetails to User entity (userDetails doesn't have access modifier for "userName")
-         * Within userDetails "userName" ≠ attribute "username")
-         * The typecasting allows the extraction of: userName (≠ username), email and role
+         * Within userDetails attribute "username" ≠ attribute "userName")
+         * The typecasting allows the extraction of: userName (≠ username), email (username) and role
          */
 
         SecurityContextHolder.getContext().setAuthentication(authenticationResponse);
         User _user = (User) authenticationResponse.getPrincipal();
 
-        String token = jwtUtils.generateToken(_user);
-        String refreshToken = jwtUtils.generateRefreshToken(new HashMap<>(), _user);
+        String token = jwtUtils.generateToken(_user.getUserName(), _user);
+        String refreshToken = jwtUtils.generateRefreshToken(new HashMap<>(), _user.getUserName(), _user);
         Long expirationTime = jwtUtils.extractExpirationTime(token);
 
         UserDto userDto = UserDto.builder()
@@ -88,7 +84,7 @@ public class AuthService {
         return userDto;
     }
 
-    public UserDto update(User user, MultipartFile image) throws IOException, ResourceNotFoundException {
+    public UserDto update(User user, MultipartFile image) throws IOException, ResourceNotFoundException  {
 
         // Obtain the user's identity from Spring Security
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -99,8 +95,6 @@ public class AuthService {
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         // Map ONLY the fields you want to allow updating
-        existingUser.setUserName(user.getUserName());
-
         if (user.getUserName() != null)
             existingUser.setUserName(user.getUserName());
 
@@ -139,6 +133,7 @@ public class AuthService {
                 .userProfileImage(existingUser.getUserProfileImage())
                 .message("update success")
                 .build();
+                // TODO - also return a new token if email has changed
 
         // The following are not returned as updates
         // - role

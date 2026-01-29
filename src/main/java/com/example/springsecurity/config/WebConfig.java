@@ -12,12 +12,24 @@ public class WebConfig implements WebMvcConfigurer {
     @Value("${file.upload-dir}")
     private String uploadDir;
 
+    @Value("${origin.port}")
+    private String originPort;
+
+    @Value("${origin.host}")
+    private String originHost;
+
+    private String strUrl = "http://";
+
+    public static final String API_ENDPOINT = "/api/v1";
+
     @Override
     public void addCorsMappings(CorsRegistry registry) {
 
-        // Allow CORS for api/v1/public/api
-        registry.addMapping("api/v1/public/**")                 // Set the pathPattern
-                .allowedOrigins("http://127.0.0.1:9876")                    // Restricted requests from: "http://227.0.0.1:9876"
+        String mainUrl= strUrl.concat(originHost).concat(":").concat(originPort);
+        System.out.println(mainUrl);
+        // Allow CORS for /api/v1/public/api
+        registry.addMapping(API_ENDPOINT.concat("/public/**"))          // Set the pathPattern
+                .allowedOrigins(mainUrl)                                    // Restricted requests from: "http://227.0.0.1:5500"
                 .allowedMethods("GET", "POST")                              // Allowable HTTP methods
                 .allowCredentials(false)                                    // Credentials aren't typically needed for public API
                 .allowedHeaders(
@@ -30,10 +42,10 @@ public class WebConfig implements WebMvcConfigurer {
                 .maxAge(3600);                                              // Set max age (sec) for CORS response cached by browser
 
 
-        // Allow CORS for api/v1/user/api
-        registry.addMapping("api/v1/user/**")                   // Set the pathPattern
-                .allowedOrigins("http://127.0.0.1:9876")                    // Restricted requests from: "http://227.0.0.1:9876"
-                .allowedMethods("GET", "POST", "PUT")                       // Allow ALL CRUD operations
+        // Allow CORS for /api/v1/user/api
+        registry.addMapping(API_ENDPOINT.concat("/user/**"))            // Set the pathPattern
+                .allowedOrigins(mainUrl)                                    // Restricted requests from: "http://227.0.0.1:5500"
+                .allowedMethods("GET", "POST", "PUT")                       // Allow ALL CRU operations
                 .allowCredentials(true)                                     // Allow credentials: cookies, auth headers, TLS certs
                 .allowedHeaders(
                         "Authorization",                                    // IMPORTANT: pass auth credentials (e.g. JWT, API keys)
@@ -52,7 +64,7 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         // Mapping URL path to the external directory
-        registry.addResourceHandler("/" + uploadDir + "/**")
+        registry.addResourceHandler(API_ENDPOINT.concat("/").concat(uploadDir).concat("/**"))
                 .addResourceLocations("file:" + uploadDir + "/");
     }
 }
